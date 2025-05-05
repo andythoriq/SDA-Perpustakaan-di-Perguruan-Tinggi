@@ -1,8 +1,6 @@
 #ifndef PROSES_H
 #define PROSES_H
 
-#include "../ADT-Model/buku.h"
-#include "../ADT-Model/peminjam.h"
 #include "../ADT-Model/listantrean.h"
 
 typedef struct PeminjamanAktif {
@@ -11,7 +9,9 @@ typedef struct PeminjamanAktif {
     struct PeminjamanAktif *next;
 } PeminjamanAktif;
 
-extern PeminjamanAktif *PeminjamanList; 
+extern PeminjamanAktif *PeminjamanList;
+
+void setUjungJadiBuku(listAntrean *listAntrean, Buku *buku);
 
 void initialAntreanPeminjaman(Buku *buku, const char nama[], Prioritas pr);
 void prosesPeminjaman(Buku *buku);

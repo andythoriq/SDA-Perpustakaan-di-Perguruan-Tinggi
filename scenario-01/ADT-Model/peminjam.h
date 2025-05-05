@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "buku.h"
+
 typedef enum {
     DOSEN = 1,
     MHS = 2,
@@ -15,8 +17,8 @@ typedef enum {
 typedef struct Peminjam {
     char nama[50];
     Prioritas prioritas;
-    struct Peminjam* next;
-    // void* next;
+    struct Peminjam* nextPeminjam;
+    struct Buku* nextBuku; // untuk menandakan ujung
 } Peminjam;
 
 // Queue operations

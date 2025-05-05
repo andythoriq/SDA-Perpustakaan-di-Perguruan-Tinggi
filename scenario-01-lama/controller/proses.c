@@ -1,59 +1,47 @@
 #include "proses.h"
 
-PeminjamanAktif *PeminjamanList = NULL; 
+PeminjamanAktif *PeminjamanList = NULL;
 
-// method initalize antrean
 void initialAntreanPeminjaman(Buku *buku, const char nama[], Prioritas pr)
 {
     if (!buku || !nama || nama[0] == '\0')
         return;
 
-    listAntrean *listAntrean = getListAntreanByBuku(buku);
+    listAntrean *list = getListAntreanByBuku(buku);
+    if (list == NULL)
+        return;
 
-    Peminjam *peminjamBaru = createPeminjam(nama, pr);
+    Peminjam *baru = createPeminjam(nama, pr);
 
-    // jika antrean kosong
-    if (listAntrean->antrean == NULL)
+    if (list->antrean == NULL)
     {
-        peminjamBaru->next = buku;
-        listAntrean->antrean = peminjamBaru;
+        list->antrean = baru;
         return;
     }
 
-    Peminjam* curr = listAntrean->antrean;
-    Peminjam* prev = NULL;
+    Peminjam *curr = list->antrean;
+    Peminjam *prev = NULL;
 
-    //                                        2  <=  1 false
-    //                                        2  <=  2 true
-    //                                        2  <=  3 true
-    //                                        1  <=  2 true
-    while (curr != NULL && (void*)curr != (void*)buku && curr->prioritas <= pr)
-    // while (curr != buku && curr->prioritas <= pr)
+    while (curr != NULL && curr->prioritas <= pr)
     {
         prev = curr;
         curr = curr->next;
     }
 
-    peminjamBaru->next = (void*) curr;
-
-    if (prev == NULL) // awal
-    {
-        listAntrean->antrean = peminjamBaru;
-    }
+    baru->next = curr;
+    if (prev == NULL)
+        list->antrean = baru;
     else
-    {
-        prev->next = peminjamBaru;
-    }
+        prev->next = baru;
 }
 
-// method execute peminjaman
 void prosesPeminjaman(Buku *buku)
 {
     if (!buku)
         return;
 
-    listAntrean *listAntrean = getListAntreanByBukuNull(buku); //return null kalau kosong
-    if (listAntrean == NULL || listAntrean->antrean == NULL)
+    listAntrean *list = getListAntreanByBukuNull(buku);
+    if (list == NULL || list->antrean == NULL)
     {
         printf("Tidak ada antrean peminjaman untuk buku ini!\n");
         return;
@@ -65,11 +53,8 @@ void prosesPeminjaman(Buku *buku)
         return;
     }
 
-    Peminjam *peminjam = listAntrean->antrean;
-    void *nextPeminjam = peminjam->next;
-
-    listAntrean->antrean = nextPeminjam;
-    peminjam->next = NULL;
+    Peminjam *peminjam = list->antrean;
+    list->antrean = peminjam->next;
 
     buku->stock--;
 
@@ -77,9 +62,8 @@ void prosesPeminjaman(Buku *buku)
     if (!baru)
     {
         printf("Gagal alokasi memori untuk peminjaman aktif\n");
-
-        peminjam->next = nextPeminjam;
-        listAntrean->antrean = peminjam;
+        peminjam->next = list->antrean;
+        list->antrean = peminjam;
         buku->stock++;
         return;
     }
@@ -101,8 +85,7 @@ void prosesPengembalian(Buku *buku, const char nama[])
     PeminjamanAktif *curr = PeminjamanList;
     PeminjamanAktif *prev = NULL;
 
-    while (curr != NULL &&
-           !(strcmp(curr->peminjam->nama, nama) == 0 && curr->buku == buku))
+    while (curr != NULL && !(strcmp(curr->peminjam->nama, nama) == 0 && curr->buku == buku))
     {
         prev = curr;
         curr = curr->next;
@@ -110,24 +93,18 @@ void prosesPengembalian(Buku *buku, const char nama[])
 
     if (curr == NULL)
     {
-        printf("Peminjaman aktif untuk \"%s\" pada buku \"%s\" tidak ditemukan.\n",
-               nama, buku->judul);
+        printf("Peminjaman aktif untuk \"%s\" pada buku \"%s\" tidak ditemukan.\n", nama, buku->judul);
         return;
     }
 
-    if (prev == NULL) // jika yang dihapus adalah pertama
-    {
+    if (prev == NULL)
         PeminjamanList = curr->next;
-    }
     else
-    {
         prev->next = curr->next;
-    }
 
     buku->stock++;
 
-    printf("Mengembalikan \"%s\" yang dipinjam oleh \"%s\".\n",
-           curr->buku->judul, curr->peminjam->nama);
+    printf("Mengembalikan \"%s\" yang dipinjam oleh \"%s\".\n", curr->buku->judul, curr->peminjam->nama);
 
     free(curr->peminjam);
     free(curr);
@@ -138,39 +115,36 @@ void batalkanAntrean(Buku *buku, const char nama[])
     if (!buku || !nama || nama[0] == '\0')
         return;
 
-    listAntrean *listAntrean = getListAntreanByBukuNull(buku);
-    if (listAntrean == NULL || listAntrean->antrean == NULL) { // return null kalau kosong
-        printf("List kosong!");
+    listAntrean *list = getListAntreanByBukuNull(buku);
+    if (list == NULL || list->antrean == NULL)
+    {
+        printf("List kosong!\n");
         return;
     }
-    Peminjam *curr = listAntrean->antrean;
+
+    Peminjam *curr = list->antrean;
     Peminjam *prev = NULL;
 
     while (curr != NULL && strcmp(curr->nama, nama) != 0)
     {
         prev = curr;
-        curr = (Peminjam*) curr->next;
-        if ((void*)curr == (void*)buku)
-        // if (curr == buku)
-        {
-            printf("Peminjam \"%s\" tidak ditemukan dalam antrean buku \"%s\".\n",
-                   nama, buku->judul);
-            return;
-        }
+        curr = curr->next;
     }
 
-    if (prev == NULL) // jika yang dihapus adalah pertama
+    if (curr == NULL)
     {
-        listAntrean->antrean = curr->next;
+        printf("Peminjam \"%s\" tidak ditemukan dalam antrean buku \"%s\".\n", nama, buku->judul);
+        return;
     }
+
+    if (prev == NULL)
+        list->antrean = curr->next;
     else
-    {
         prev->next = curr->next;
-    }
 
     free(curr);
-    printf("Antrean peminjam \"%s\" untuk buku \"%s\" dibatalkan.\n",
-           nama, buku->judul);
+
+    printf("Antrean peminjam \"%s\" untuk buku \"%s\" dibatalkan.\n", nama, buku->judul);
 }
 
 void lihatPeminjamanAktif()
@@ -218,21 +192,22 @@ void displayAllBukuAndAntrean()
         printf("\nBuku: %s\nStock: %d\n", currentBuku->judul, currentBuku->stock);
         printf("------------------------\n");
 
-        listAntrean* current = getListAntreanByBukuNull(currentBuku);
+        listAntrean *current = getListAntreanByBukuNull(currentBuku);
         if (current != NULL && current->antrean != NULL)
         {
             Peminjam *currentPeminjam = current->antrean;
-            while (currentPeminjam != NULL && (void*)currentPeminjam != (void*)currentBuku)
+            while (currentPeminjam != NULL)
             {
-                printf("Nama: %s, Prioritas: %d (%s)\n", 
-                    currentPeminjam->nama, 
-                    currentPeminjam->prioritas,
-                    currentPeminjam->prioritas == 1 ? "Dosen" : 
-                    currentPeminjam->prioritas == 2 ? "Mahasiswa" : "Umum"
-                );
-                currentPeminjam = (Peminjam*) currentPeminjam->next;
+                printf("Nama: %s, Prioritas: %d (%s)\n",
+                       currentPeminjam->nama,
+                       currentPeminjam->prioritas,
+                       currentPeminjam->prioritas == 1 ? "Dosen" : currentPeminjam->prioritas == 2 ? "Mahasiswa"
+                                                                                                   : "Umum");
+                currentPeminjam = currentPeminjam->next;
             }
-        } else {
+        }
+        else
+        {
             printf("belum ada yang meminjam buku ini\n");
         }
         printf("------------------------\n");

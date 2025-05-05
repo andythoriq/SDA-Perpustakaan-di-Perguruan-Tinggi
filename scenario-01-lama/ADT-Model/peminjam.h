@@ -15,8 +15,8 @@ typedef enum {
 typedef struct Peminjam {
     char nama[50];
     Prioritas prioritas;
-    // struct Peminjam* next;
-    void* next;
+    struct Peminjam* next;
+    // void* next;
 } Peminjam;
 
 // Queue operations

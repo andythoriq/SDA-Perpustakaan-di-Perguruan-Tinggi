@@ -15,7 +15,8 @@ Peminjam* createPeminjam(const char nama[], Prioritas pr) {
         strncpy(p->nama, nama, sizeof(p->nama) - 1);
         p->nama[sizeof(p->nama) - 1] = '\0';
         p->prioritas = pr;
-        p->next = NULL;
+        p->nextPeminjam = NULL;
+        p->nextBuku = NULL;
     }
     return p;
 }
@@ -25,7 +26,7 @@ void clearPeminjam(Peminjam *head)
     while (head != NULL)
     {
         Peminjam *temp = head;
-        head = head->next;
+        head = head->nextPeminjam;
         free(temp);
     }
 }

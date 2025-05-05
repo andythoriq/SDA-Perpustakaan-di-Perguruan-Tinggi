@@ -16,7 +16,6 @@ listAntrean *createListAntrean()
         return NULL;
     }
 
-    newList->buku = NULL;
     newList->antrean = NULL;
     newList->next = NULL;
     return newList;
@@ -27,52 +26,90 @@ void insertListAntrean(listAntrean *newList)
     if (newList == NULL)
         return;
 
-    newList->next = HEAD_ListAntrean;
-    HEAD_ListAntrean = newList;
+    if (isListAntreanEmpty())
+    {
+        HEAD_ListAntrean = newList;
+    }
+    else
+    {
+        newList->next = HEAD_ListAntrean;
+        HEAD_ListAntrean = newList;
+    }
 }
 
 listAntrean *getListAntreanByBuku(Buku *buku)
 {
-    if (buku == NULL)
-        return NULL;
+    // if HEAD kosong -> buat list baru
+    if (HEAD_ListAntrean == NULL)
+    {
+        listAntrean *newList = createListAntrean();
+        if (newList == NULL)
+        {
+            return NULL;
+        }
+        insertListAntrean(newList);
+        return newList;
+    }
 
     listAntrean *current = HEAD_ListAntrean;
+
     while (current != NULL)
     {
-        if (current->buku == buku)
+        if (current->antrean != NULL)
         {
-            return current;
+            Peminjam *curr = current->antrean;
+            while (curr != NULL)
+            {
+                // jika menemukan antrean yang terhubung dengan buku ini
+                if (curr->nextBuku == buku)
+                {
+                    return current;
+                }
+                curr = curr->nextPeminjam;
+            }
         }
         current = current->next;
     }
 
-    // Jika tidak ketemu, buat baru
+    // jika tidak ketemu, berarti buat listAntrean baru
     listAntrean *newList = createListAntrean();
     if (newList == NULL)
     {
         return NULL;
     }
-    newList->buku = buku;
     insertListAntrean(newList);
     return newList;
 }
 
 listAntrean *getListAntreanByBukuNull(Buku *buku)
 {
-    if (buku == NULL)
+    if (HEAD_ListAntrean == NULL || buku == NULL)
+    {
         return NULL;
+    }
 
     listAntrean *current = HEAD_ListAntrean;
+
     while (current != NULL)
     {
-        if (current->buku == buku)
+        if (current->antrean != NULL)
         {
-            return current;
+            Peminjam *curr = current->antrean;
+            while (curr != NULL)
+            {
+                // kalau menemukan antrean yang terhubung dengan buku ini
+                if (curr->nextBuku == buku)
+                {
+                    return current;
+                }
+                curr = curr->nextPeminjam;
+            }
         }
         current = current->next;
     }
 
-    return NULL; // Tidak ditemukan
+    // jika tidak ketemu=
+    return NULL;
 }
 
 void clearListAntrean()
@@ -81,12 +118,15 @@ void clearListAntrean()
     while (current != NULL)
     {
         listAntrean *next = current->next;
-        Peminjam *curr = current->antrean;
-        while (curr != NULL)
+        if (current->antrean != NULL)
         {
-            Peminjam *temp = curr;
-            curr = curr->next;
-            free(temp);
+            Peminjam *curr = current->antrean;
+            while (curr != NULL)
+            {
+                Peminjam *temp = curr;
+                curr = curr->nextPeminjam;
+                free(temp);
+            }
         }
         free(current);
         current = next;

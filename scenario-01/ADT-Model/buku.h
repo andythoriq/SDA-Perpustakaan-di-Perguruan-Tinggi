@@ -9,7 +9,6 @@ typedef struct Buku {
     char judul[50];
     int stock;
     struct Buku* next;
-    // void * next;
 } Buku;
 
 // Linked list operations
